@@ -1,16 +1,15 @@
-const axios = require('axios');
+require('dotenv').config();
+const axios = require('./axios');
 
-const axiosInstance = axios.create();
-
-async function main() {
+async function wow() {
   try {
-    const requestToken = await axiosInstance.get(
-      'https://rest.immobilienscout24.de/restapi/security/oauth/request_token?oauth_callback=oob',
-    );
-    console.log(requestToken);
+    const url =
+      'https://rest.immobilienscout24.de/restapi/api/search/v1.0/expose/113910787';
+    const cool = await axios.get(url);
+    console.log(cool);
   } catch (error) {
-    console.log(error);
+    // console.log(error);
   }
 }
 
-main();
+wow();
