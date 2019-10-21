@@ -65,6 +65,12 @@ oldIds.forEach((id) => {
                 resolve();
                 return;
               }
+              const page = await browser.newPage();
+              page.setViewport({
+                width: 1280,
+                height: 720,
+                deviceScaleFactor: 1,
+              });
               await page.goto(`https://www.immobilienscout24.de/expose/${id}`, {
                 timeout: 0,
               });
@@ -74,6 +80,7 @@ oldIds.forEach((id) => {
               await page.hover('[data-qa="sendButtonBasic"]');
               // await page.click('[data-qa="sendButtonBasic"]');
               await page.screenshot({ path: `pics/${id}.png` });
+              await page.close();
               console.log('done', id);
               resolve();
             })
