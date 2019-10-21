@@ -3,18 +3,16 @@ const axios = require('./axios');
 const fs = require('fs');
 const puppeteer = require('puppeteer');
 
-const { isApartmentGood } = require('./utils');
-const { message } = require('./config');
+const { createMessage, isApartmentGood } = require('./utils');
 
 const password = process.env.PASSWORD;
 const userId = process.env.USER_ID;
 
 const oldIds = JSON.parse(fs.readFileSync('ids.json'));
-oldIds.forEach((id) => {
-  console.log('skipping old ad', id);
-});
+// const oldIds = [];
 
-(async () => {
+const main = async () => {
+  console.log(`spinning up at ${new Date().toString()}`);
   const browser = await puppeteer.launch({
     headless: false,
   });
@@ -40,6 +38,10 @@ oldIds.forEach((id) => {
       items.map((item) => item.dataset.id),
     );
     const newIds = idsFromPage.filter((id) => !oldIds.includes(id));
+    const oldIdsToSkip = idsFromPage.filter((id) => oldIds.includes(id));
+    oldIdsToSkip.forEach((id) => {
+      console.log('skipping old ad', id);
+    });
 
     const allExistingIds = Array.from(new Set([...oldIds, ...idsFromPage]));
     // save offer ids so we don't message anyone twice
@@ -60,8 +62,14 @@ oldIds.forEach((id) => {
                 hasBalcony: data['expose.expose'].realEstate.balcony,
                 floorSpace: data['expose.expose'].realEstate.usableFloorSpace,
               };
+              const messageParameters = {
+                lastName: data['expose.expose'].contactDetails.lastname,
+                salutation: data['expose.expose'].contactDetails.salutation,
+                street: data['expose.expose'].realEstate.address.street,
+              };
+              const message = createMessage(messageParameters);
               if (!isApartmentGood(property)) {
-                console.log('skipped', id);
+                console.log('skipped', id, message);
                 resolve();
                 return;
               }
@@ -85,6 +93,7 @@ oldIds.forEach((id) => {
               resolve();
             })
             .catch((err) => {
+              console.log(err);
               reject(err);
             });
         }),
@@ -97,4 +106,8 @@ oldIds.forEach((id) => {
     console.log(err);
     browser.close();
   }
-})();
+};
+
+// run this bad boi every 5 minutes
+main();
+setInterval(main, 1000 * 60 * 5);

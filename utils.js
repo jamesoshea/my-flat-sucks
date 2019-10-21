@@ -2,6 +2,19 @@ const { getDistance } = require('geolib');
 
 const { searchCenter, minimumFloorSpace } = require('./config');
 
+const createMessage = ({ street, lastName, salutation }) => {
+  const message = `ich habe viel Interesse an der Wohnung, die auf ${street} angelegt ist. Wann ist die nächste mögliche Besichtigungstermin?\n\nLiebe Grüße,\n\nJames O'Shea`;
+  const salutationDict = {
+    MALE: 'Herr',
+    FEMALE: 'Frau',
+  };
+  const greeting =
+    salutationDict[salutation] && lastName
+      ? `Guten Tag ${salutationDict[salutation]} ${lastName},`
+      : 'Guten Tag,';
+  return `${greeting}\n\n${message}`;
+};
+
 const isApartmentGood = (property) => {
   const isCloseEnough =
     getDistance(
@@ -23,5 +36,6 @@ const isApartmentGood = (property) => {
 };
 
 module.exports = {
+  createMessage,
   isApartmentGood,
 };
