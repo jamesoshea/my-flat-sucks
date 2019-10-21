@@ -1,31 +1,33 @@
 require('dotenv').config();
 const axios = require('./axios');
 const fs = require('fs');
-const { getDistance } = require('geolib');
 const puppeteer = require('puppeteer');
+
+const { isApartmentGood } = require('./utils');
+const { message } = require('./config');
 
 const password = process.env.PASSWORD;
 const userId = process.env.USER_ID;
-
-const { searchCenter, minimumFloorSpace } = require('./config');
 
 const oldIds = [];
 // const oldIds = JSON.parse(fs.readFileSync('ids.json'));
 
 (async () => {
   try {
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({
+      headless: false,
+    });
     const page = await browser.newPage();
     page.setViewport({
-      width: 1920,
-      height: 1280,
+      width: 1280,
+      height: 720,
       deviceScaleFactor: 1,
     });
     // attempt to login
     await page.goto(
       `https://sso.immobilienscout24.de/sso/login?appName=is24main&source=meinkontodropdown-login&sso_return=https://www.immobilienscout24.de/sso/login.go?source%3Dmeinkontodropdown-login%26returnUrl%3D/geschlossenerbereich/start.html?source%253Dmeinkontodropdown-login&u=${userId}=&nl=true`,
     );
-    await page.type('#password', password, { delay: 100 });
+    await page.type('#password', password);
     await page.click('#loginOrRegistration');
 
     // go to page and fetch offers
@@ -45,28 +47,21 @@ const oldIds = [];
       const { data } = await axios.get(
         `https://rest.immobilienscout24.de/restapi/api/search/v1.0/expose/${id}`,
       );
-      const coords = data['expose.expose'].realEstate.address.wgs84Coordinate;
-      const hasBalcony = data['expose.expose'].realEstate.balcony;
-      const isCloseEnough =
-        getDistance(
-          {
-            latitude: searchCenter.latitude,
-            longitude: searchCenter.longitude,
-          },
-          {
-            latitude: coords.latitude,
-            longitude: coords.longitude,
-          },
-        ) < searchCenter.maxDistance;
-      const isBigEnough =
-        Number(data['expose.expose'].realEstate.usableFloorSpace) >
-        minimumFloorSpace;
-      if (isBigEnough && isCloseEnough && hasBalcony) {
-        console.log(`https://www.immobilienscout24.de/expose/${id}`);
+      const property = {
+        coords: data['expose.expose'].realEstate.address.wgs84Coordinate,
+        hasBalcony: data['expose.expose'].realEstate.balcony,
+        floorSpace: data['expose.expose'].realEstate.usableFloorSpace,
+      };
+      if (isApartmentGood(property)) {
+        await page.goto(`https://www.immobilienscout24.de/expose/${id}`);
+        await page.click('[data-qa="sendButton"]');
+        await page.waitForSelector('.style__basicContactContainer___1-fVc');
+        console.log('frame loaded');
+        await page.type('textarea', message);
+        await page.screenshot({ path: `pics/${id}.png` });
       }
     });
     // await page.screenshot({ path: 'debug.png' });
-    await browser.close();
   } catch (err) {
     console.log(err);
   }

@@ -1,4 +1,9 @@
 module.exports = {
+  message: `Hallo, ich habe viel Interesse an dieser Wohnung. Wann ist die nächste mögliche Besichtigungstermin?
+
+  Liebe Grüße
+  
+  James`,
   minimumFloorSpace: 50,
   searchCenter: {
     latitude: 52.521641,
