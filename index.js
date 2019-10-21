@@ -9,14 +9,16 @@ const { message } = require('./config');
 const password = process.env.PASSWORD;
 const userId = process.env.USER_ID;
 
-const oldIds = [];
-// const oldIds = JSON.parse(fs.readFileSync('ids.json'));
+const oldIds = JSON.parse(fs.readFileSync('ids.json'));
+oldIds.forEach((id) => {
+  console.log('skipping old ad', id);
+});
 
 (async () => {
+  const browser = await puppeteer.launch({
+    headless: false,
+  });
   try {
-    const browser = await puppeteer.launch({
-      headless: false,
-    });
     const page = await browser.newPage();
     page.setViewport({
       width: 1280,
@@ -37,32 +39,55 @@ const oldIds = [];
     const idsFromPage = await page.$$eval('.result-list__listing', (items) =>
       items.map((item) => item.dataset.id),
     );
+    const newIds = idsFromPage.filter((id) => !oldIds.includes(id));
 
     const allExistingIds = Array.from(new Set([...oldIds, ...idsFromPage]));
     // save offer ids so we don't message anyone twice
     fs.writeFileSync('ids.json', JSON.stringify(allExistingIds));
 
-    const newIds = idsFromPage.filter((id) => !oldIds.includes(id));
-    newIds.forEach(async (id) => {
-      const { data } = await axios.get(
-        `https://rest.immobilienscout24.de/restapi/api/search/v1.0/expose/${id}`,
+    const promiseArray = [];
+    newIds.forEach((id) => {
+      promiseArray.push(
+        new Promise((resolve, reject) => {
+          axios
+            .get(
+              `https://rest.immobilienscout24.de/restapi/api/search/v1.0/expose/${id}`,
+            )
+            .then(async ({ data }) => {
+              const property = {
+                coords:
+                  data['expose.expose'].realEstate.address.wgs84Coordinate,
+                hasBalcony: data['expose.expose'].realEstate.balcony,
+                floorSpace: data['expose.expose'].realEstate.usableFloorSpace,
+              };
+              if (!isApartmentGood(property)) {
+                console.log('skipped', id);
+                resolve();
+                return;
+              }
+              await page.goto(`https://www.immobilienscout24.de/expose/${id}`, {
+                timeout: 0,
+              });
+              await page.click('[data-qa="sendButton"]');
+              await page.waitForSelector('textarea', { visible: true });
+              await page.type('textarea', message);
+              await page.hover('[data-qa="sendButtonBasic"]');
+              // await page.click('[data-qa="sendButtonBasic"]');
+              await page.screenshot({ path: `pics/${id}.png` });
+              console.log('done', id);
+              resolve();
+            })
+            .catch((err) => {
+              reject(err);
+            });
+        }),
       );
-      const property = {
-        coords: data['expose.expose'].realEstate.address.wgs84Coordinate,
-        hasBalcony: data['expose.expose'].realEstate.balcony,
-        floorSpace: data['expose.expose'].realEstate.usableFloorSpace,
-      };
-      if (isApartmentGood(property)) {
-        await page.goto(`https://www.immobilienscout24.de/expose/${id}`);
-        await page.click('[data-qa="sendButton"]');
-        await page.waitForSelector('.style__basicContactContainer___1-fVc');
-        console.log('frame loaded');
-        await page.type('textarea', message);
-        await page.screenshot({ path: `pics/${id}.png` });
-      }
     });
-    // await page.screenshot({ path: 'debug.png' });
+    Promise.allSettled(promiseArray).then(async () => {
+      await browser.close();
+    });
   } catch (err) {
     console.log(err);
+    browser.close();
   }
 })();
