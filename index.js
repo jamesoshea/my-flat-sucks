@@ -4,6 +4,7 @@ const fs = require('fs');
 const puppeteer = require('puppeteer');
 
 const { createMessage, isApartmentGood } = require('./utils');
+const { sendMessage } = require('./nodemailer');
 
 const password = process.env.PASSWORD;
 const userId = process.env.USER_ID;
@@ -13,9 +14,7 @@ const oldIds = JSON.parse(fs.readFileSync('ids.json'));
 
 const main = async () => {
   console.log(`spinning up at ${new Date().toString()}`);
-  const browser = await puppeteer.launch({
-    headless: false,
-  });
+  const browser = await puppeteer.launch();
   try {
     const page = await browser.newPage();
     page.setViewport({
@@ -51,10 +50,9 @@ const main = async () => {
     newIds.forEach((id) => {
       promiseArray.push(
         new Promise((resolve, reject) => {
+          const url = `https://rest.immobilienscout24.de/restapi/api/search/v1.0/expose/${id}`;
           axios
-            .get(
-              `https://rest.immobilienscout24.de/restapi/api/search/v1.0/expose/${id}`,
-            )
+            .get(url)
             .then(async ({ data }) => {
               const property = {
                 coords:
@@ -69,7 +67,7 @@ const main = async () => {
               };
               const message = createMessage(messageParameters);
               if (!isApartmentGood(property)) {
-                console.log('skipped', id, message);
+                console.log('skipped', id);
                 resolve();
                 return;
               }
@@ -87,6 +85,7 @@ const main = async () => {
               await page.type('textarea', message);
               await page.hover('[data-qa="sendButtonBasic"]');
               // await page.click('[data-qa="sendButtonBasic"]');
+              await sendMessage(url);
               await page.screenshot({ path: `pics/${id}.png` });
               await page.close();
               console.log('done', id);
