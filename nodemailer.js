@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer');
 
-const sendMessage = async () => {
+const sendMessage = async (id) => {
   const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 465,
@@ -13,10 +13,9 @@ const sendMessage = async () => {
 
   await transporter.sendMail({
     from: '"immobot 👻" <iamveryrad@gmail.com>', // sender address
-    to: 'jamesoshea89@hotmail.com', // list of receivers
-    subject: 'Hello ✔', // Subject line
-    text: 'Hello world?', // plain text body
-    html: '<b>Hello world?</b>', // html body
+    to: 'iamveryrad@gmail.com', // list of receivers
+    subject: 'MESSAGE SENT', // Subject line
+    html: `message sent to contact for <a href="https://www.immobilienscout24.de/expose/${id}">this url</a>`, // html body
   });
 };
 

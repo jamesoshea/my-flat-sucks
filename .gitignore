@@ -3,4 +3,3 @@ node_modules/
 .vscode
 debug.png
 pics/**.*
-ids.json

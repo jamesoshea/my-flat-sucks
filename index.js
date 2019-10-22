@@ -14,7 +14,9 @@ const oldIds = JSON.parse(fs.readFileSync('ids.json'));
 
 const main = async () => {
   console.log(`spinning up at ${new Date().toString()}`);
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({
+    headless: false,
+  });
   try {
     const page = await browser.newPage();
     page.setViewport({
@@ -31,7 +33,7 @@ const main = async () => {
 
     // go to page and fetch offers
     await page.goto(
-      'https://www.immobilienscout24.de/Suche/S-T/Wohnung-Miete/Berlin/Berlin/-/1,50-/-/EURO--900,00/-/-/-/-/-/true?enteredFrom=saved_search',
+      'https://www.immobilienscout24.de/Suche/S-2/Wohnung-Miete/Berlin/Berlin/-/1,50-/-/EURO--900,00/-/-/-/-/-/true',
     );
     const idsFromPage = await page.$$eval('.result-list__listing', (items) =>
       items.map((item) => item.dataset.id),
@@ -59,6 +61,7 @@ const main = async () => {
                   data['expose.expose'].realEstate.address.wgs84Coordinate,
                 hasBalcony: data['expose.expose'].realEstate.balcony,
                 floorSpace: data['expose.expose'].realEstate.usableFloorSpace,
+                postcode: data['expose.expose'].realEstate.address.postcode,
               };
               const messageParameters = {
                 lastName: data['expose.expose'].contactDetails.lastname,
@@ -85,7 +88,7 @@ const main = async () => {
               await page.type('textarea', message);
               await page.hover('[data-qa="sendButtonBasic"]');
               // await page.click('[data-qa="sendButtonBasic"]');
-              await sendMessage(url);
+              await sendMessage(id);
               await page.screenshot({ path: `pics/${id}.png` });
               await page.close();
               console.log('done', id);

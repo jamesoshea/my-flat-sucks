@@ -15,24 +15,36 @@ const createMessage = ({ street, lastName, salutation }) => {
   return `${greeting}\n\n${message}`;
 };
 
-const isApartmentGood = (property) => {
-  const isCloseEnough =
-    getDistance(
-      {
-        latitude: searchCenter.latitude,
-        longitude: searchCenter.longitude,
-      },
-      {
-        latitude: property.coords.latitude,
-        longitude: property.coords.longitude,
-      },
-    ) < searchCenter.maxDistance;
+const isInCoolPostCode = () => {
+  // todo: find cool postcodes
+  return true;
+};
 
+const isCloseEnough = (property) => {
+  try {
+    return (
+      getDistance(
+        {
+          latitude: searchCenter.latitude,
+          longitude: searchCenter.longitude,
+        },
+        {
+          latitude: property.coords.latitude,
+          longitude: property.coords.longitude,
+        },
+      ) < searchCenter.maxDistance
+    );
+  } catch (error) {
+    return isInCoolPostCode(property.postcode);
+  }
+};
+
+const isApartmentGood = (property) => {
   const isBigEnough = Number(property.floorSpace) > minimumFloorSpace;
 
   const hasBalcony = property.hasBalcony;
 
-  return Boolean(isCloseEnough && isBigEnough && hasBalcony);
+  return Boolean(isCloseEnough(property) && isBigEnough && hasBalcony);
 };
 
 module.exports = {
