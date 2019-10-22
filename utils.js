@@ -1,6 +1,7 @@
 const { getDistance } = require('geolib');
 
 const { searchCenter, minimumFloorSpace } = require('./config');
+const coolPostcodes = require('./postcodes.json');
 
 const createMessage = ({ street, lastName, salutation }) => {
   const message = `ich habe viel Interesse an der Wohnung, die auf ${street} angelegt ist. Wann ist die nächste mögliche Besichtigungstermin?\n\nLiebe Grüße,\n\nJames O'Shea`;
@@ -15,9 +16,8 @@ const createMessage = ({ street, lastName, salutation }) => {
   return `${greeting}\n\n${message}`;
 };
 
-const isInCoolPostCode = () => {
-  // todo: find cool postcodes
-  return true;
+const isInCoolPostCode = (postcode) => {
+  return coolPostcodes.includes(Number(postcode));
 };
 
 const isCloseEnough = (property) => {
