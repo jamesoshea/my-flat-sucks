@@ -17,33 +17,35 @@ const createMessage = ({ street, lastName, salutation }) => {
 };
 
 const isInCoolPostCode = (postcode) => {
+  console.log(Number(postcode));
   return coolPostcodes.includes(Number(postcode));
 };
 
 const isCloseEnough = (property) => {
-  try {
-    return (
-      getDistance(
-        {
-          latitude: searchCenter.latitude,
-          longitude: searchCenter.longitude,
-        },
-        {
-          latitude: property.coords.latitude,
-          longitude: property.coords.longitude,
-        },
-      ) < searchCenter.maxDistance
-    );
-  } catch (error) {
+  if (
+    !property.coords ||
+    !property.coords.latitude ||
+    property.coords.longitude
+  ) {
     return isInCoolPostCode(property.postcode);
   }
+  return (
+    getDistance(
+      {
+        latitude: searchCenter.latitude,
+        longitude: searchCenter.longitude,
+      },
+      {
+        latitude: property.coords.latitude,
+        longitude: property.coords.longitude,
+      },
+    ) < searchCenter.maxDistance
+  );
 };
 
 const isApartmentGood = (property) => {
   const isBigEnough = Number(property.floorSpace) > minimumFloorSpace;
-
   const hasBalcony = property.hasBalcony;
-
   return Boolean(isCloseEnough(property) && isBigEnough && hasBalcony);
 };
 

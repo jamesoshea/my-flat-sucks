@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer');
 
-const sendMessage = async (id) => {
+const sendNotificationEmail = async (id) => {
   const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 465,
@@ -20,5 +20,5 @@ const sendMessage = async (id) => {
 };
 
 module.exports = {
-  sendMessage,
+  sendNotificationEmail,
 };

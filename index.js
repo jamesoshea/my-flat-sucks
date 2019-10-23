@@ -4,13 +4,12 @@ const fs = require('fs');
 const puppeteer = require('puppeteer');
 
 const { createMessage, isApartmentGood } = require('./utils');
-const { sendMessage } = require('./nodemailer');
+const { sendNotificationEmail } = require('./nodemailer');
 
 const password = process.env.PASSWORD;
 const userId = process.env.USER_ID;
 
 const oldIds = JSON.parse(fs.readFileSync('ids.json'));
-// const oldIds = [];
 
 const main = async () => {
   console.log(`spinning up at ${new Date().toString()}`);
@@ -86,10 +85,8 @@ const main = async () => {
               await page.click('[data-qa="sendButton"]');
               await page.waitForSelector('textarea', { visible: true });
               await page.type('textarea', message);
-              await page.hover('[data-qa="sendButtonBasic"]');
-              // await page.click('[data-qa="sendButtonBasic"]');
-              await sendMessage(id);
-              await page.screenshot({ path: `pics/${id}.png` });
+              await page.click('[data-qa="sendButtonBasic"]');
+              await sendNotificationEmail(id);
               await page.close();
               console.log('done', id);
               resolve();
@@ -102,6 +99,7 @@ const main = async () => {
       );
     });
     Promise.allSettled(promiseArray).then(async () => {
+      console.log(`closing crawler at ${new Date().toString()}`);
       await browser.close();
     });
   } catch (err) {
