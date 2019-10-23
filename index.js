@@ -13,9 +13,7 @@ const oldIds = JSON.parse(fs.readFileSync('ids.json'));
 
 const main = async () => {
   console.log(`spinning up at ${new Date().toString()}`);
-  const browser = await puppeteer.launch({
-    headless: false,
-  });
+  const browser = await puppeteer.launch();
   try {
     const page = await browser.newPage();
     page.setViewport({
