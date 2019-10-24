@@ -17,7 +17,6 @@ const createMessage = ({ street, lastName, salutation }) => {
 };
 
 const isInCoolPostCode = (postcode) => {
-  console.log(Number(postcode));
   return coolPostcodes.includes(Number(postcode));
 };
 

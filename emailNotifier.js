@@ -1,3 +1,4 @@
+const userEmail = process.env.USER_EMAIL;
 const nodemailer = require('nodemailer');
 
 const sendNotificationEmail = async (id) => {
@@ -12,8 +13,8 @@ const sendNotificationEmail = async (id) => {
   });
 
   await transporter.sendMail({
-    from: '"immobot 👻" <iamveryrad@gmail.com>', // sender address
-    to: 'iamveryrad@gmail.com', // list of receivers
+    from: `"immobot 👻" <${userEmail}>`, // sender address
+    to: `${userEmail}`, // list of receivers
     subject: 'MESSAGE SENT', // Subject line
     html: `message sent to contact for <a href="https://www.immobilienscout24.de/expose/${id}">this url</a>`, // html body
   });

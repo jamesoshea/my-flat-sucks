@@ -1,10 +1,10 @@
 require('dotenv').config();
-const axios = require('./axios');
 const fs = require('fs');
 const puppeteer = require('puppeteer');
 
+const axios = require('./createOAuthRequest');
 const { createMessage, isApartmentGood } = require('./utils');
-const { sendNotificationEmail } = require('./nodemailer');
+const { sendNotificationEmail } = require('./emailNotifier');
 
 const password = process.env.PASSWORD;
 const userId = process.env.USER_ID;
@@ -21,6 +21,7 @@ const main = async () => {
       height: 720,
       deviceScaleFactor: 1,
     });
+
     // attempt to login
     await page.goto(
       `https://sso.immobilienscout24.de/sso/login?appName=is24main&source=meinkontodropdown-login&sso_return=https://www.immobilienscout24.de/sso/login.go?source%3Dmeinkontodropdown-login%26returnUrl%3D/geschlossenerbereich/start.html?source%253Dmeinkontodropdown-login&u=${userId}=&nl=true`,
@@ -46,13 +47,13 @@ const main = async () => {
     fs.writeFileSync('ids.json', JSON.stringify(allExistingIds));
 
     const promiseArray = [];
-    newIds.forEach((id) => {
+    newIds.forEach(async (id) => {
       promiseArray.push(
         new Promise((resolve, reject) => {
           const url = `https://rest.immobilienscout24.de/restapi/api/search/v1.0/expose/${id}`;
-          axios
-            .get(url)
-            .then(async ({ data }) => {
+          try {
+            const fetchProperties = async () => {
+              const { data } = axios.get(url);
               const property = {
                 coords:
                   data['expose.expose'].realEstate.address.wgs84Coordinate,
@@ -88,24 +89,24 @@ const main = async () => {
               await page.close();
               console.log('done', id);
               resolve();
-            })
-            .catch((err) => {
-              console.log(err);
-              reject(err);
-            });
+            };
+            fetchProperties();
+          } catch (error) {
+            console.log(error);
+            reject(error);
+          }
         }),
       );
     });
-    Promise.allSettled(promiseArray).then(async () => {
-      console.log(`closing crawler at ${new Date().toString()}`);
-      await browser.close();
-    });
+    await Promise.allSettled(promiseArray);
+    console.log(`closing crawler at ${new Date().toString()}`);
+    await browser.close();
   } catch (err) {
     console.log(err);
     browser.close();
   }
 };
 
-// run this bad boi every 5 minutes
+// run this bad boi every 2 minutes
 main();
-setInterval(main, 1000 * 60 * 5);
+setInterval(main, 1000 * 60 * 2);
