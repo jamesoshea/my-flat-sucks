@@ -99,7 +99,7 @@ const main = async () => {
       );
     });
     await Promise.allSettled(promiseArray);
-    fs.writeFileSync('ids.json', JSON.stringify(allExistingIds));
+    fs.writeFileSync('ids.json', JSON.stringify(checkedIds));
     console.log(`closing crawler at ${new Date().toString()}`);
     await browser.close();
   } catch (err) {
