@@ -1,3 +1,4 @@
+require('dotenv').config();
 const userEmail = process.env.USER_EMAIL;
 const nodemailer = require('nodemailer');
 
@@ -5,14 +6,14 @@ const sendNotificationEmail = async (id) => {
   const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 465,
-    secure: true, // true for 465, false for other ports
+    secure: true,
     auth: {
-      user: process.env.USER_EMAIL, // generated ethereal user
-      pass: process.env.USER_EMAIL_PASSWORD, // generated ethereal password
+      user: process.env.USER_EMAIL,
+      pass: process.env.USER_EMAIL_PASSWORD,
     },
   });
 
-  await transporter.sendMail({
+  return await transporter.sendMail({
     from: `"immobot 👻" <${userEmail}>`, // sender address
     to: `${userEmail}`, // list of receivers
     subject: 'MESSAGE SENT', // Subject line

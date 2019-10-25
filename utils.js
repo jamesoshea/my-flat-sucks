@@ -24,12 +24,10 @@ const isInCoolPostCode = (postcode) => {
 };
 
 const isCloseEnough = (property) => {
-  console.log(property.postcode);
   return isInCoolPostCode(property.postcode);
 };
 
 const isApartmentGood = (property) => {
-  console.log(property);
   const isBigEnough = Number(property.floorSpace) > minimumFloorSpace;
   const hasBalcony = property.hasBalcony;
   return Boolean(isCloseEnough(property) && isBigEnough && hasBalcony);
