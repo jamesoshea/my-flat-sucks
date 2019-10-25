@@ -57,7 +57,7 @@ const main = async () => {
                 coords:
                   data['expose.expose'].realEstate.address.wgs84Coordinate,
                 hasBalcony: data['expose.expose'].realEstate.balcony,
-                floorSpace: data['expose.expose'].realEstate.usableFloorSpace,
+                floorSpace: data['expose.expose'].realEstate.livingSpace,
                 postcode: data['expose.expose'].realEstate.address.postcode,
               };
               const messageParameters = {

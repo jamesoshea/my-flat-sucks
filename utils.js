@@ -1,6 +1,4 @@
-const { getDistance } = require('geolib');
-
-const { searchCenter, minimumFloorSpace } = require('./config');
+const { minimumFloorSpace } = require('./config');
 const coolPostcodes = require('./postcodes.json');
 
 const createMessage = ({ street, lastName, salutation }) => {
@@ -26,28 +24,12 @@ const isInCoolPostCode = (postcode) => {
 };
 
 const isCloseEnough = (property) => {
-  if (
-    !property.coords ||
-    !property.coords.latitude ||
-    property.coords.longitude
-  ) {
-    return isInCoolPostCode(property.postcode);
-  }
-  return (
-    getDistance(
-      {
-        latitude: searchCenter.latitude,
-        longitude: searchCenter.longitude,
-      },
-      {
-        latitude: property.coords.latitude,
-        longitude: property.coords.longitude,
-      },
-    ) < searchCenter.maxDistance
-  );
+  console.log(property.postcode);
+  return isInCoolPostCode(property.postcode);
 };
 
 const isApartmentGood = (property) => {
+  console.log(property);
   const isBigEnough = Number(property.floorSpace) > minimumFloorSpace;
   const hasBalcony = property.hasBalcony;
   return Boolean(isCloseEnough(property) && isBigEnough && hasBalcony);
