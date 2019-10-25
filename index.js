@@ -9,8 +9,6 @@ const { sendNotificationEmail } = require('./emailNotifier');
 const password = process.env.PASSWORD;
 const userId = process.env.USER_ID;
 
-const oldIds = JSON.parse(fs.readFileSync('ids.json'));
-
 const main = async () => {
   console.log(`spinning up at ${new Date().toString()}`);
   const browser = await puppeteer.launch();
@@ -36,6 +34,7 @@ const main = async () => {
     const idsFromPage = await page.$$eval('.result-list__listing', (items) =>
       items.map((item) => item.dataset.id),
     );
+    const oldIds = JSON.parse(fs.readFileSync('ids.json'));
     const newIds = idsFromPage.filter((id) => !oldIds.includes(id));
     const oldIdsToSkip = idsFromPage.filter((id) => oldIds.includes(id));
     oldIdsToSkip.forEach((id) => {
