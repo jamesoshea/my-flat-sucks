@@ -44,6 +44,7 @@ const main = async () => {
 
     const allExistingIds = Array.from(new Set([...oldIds, ...idsFromPage]));
     // save offer ids so we don't message anyone twice
+    const checkedIds = [...oldIds];
     fs.writeFileSync('ids.json', JSON.stringify(allExistingIds));
 
     const promiseArray = [];
@@ -52,8 +53,7 @@ const main = async () => {
         new Promise((resolve, reject) => {
           const url = `https://rest.immobilienscout24.de/restapi/api/search/v1.0/expose/${id}`;
           try {
-            const fetchProperties = async () => {
-              const { data } = axios.get(url);
+            axios.get(url).then(async ({ data }) => {
               const property = {
                 coords:
                   data['expose.expose'].realEstate.address.wgs84Coordinate,
@@ -88,9 +88,9 @@ const main = async () => {
               await sendNotificationEmail(id);
               await page.close();
               console.log('done', id);
+              checkedIds.push(id);
               resolve();
-            };
-            fetchProperties();
+            });
           } catch (error) {
             console.log(error);
             reject(error);
@@ -99,6 +99,7 @@ const main = async () => {
       );
     });
     await Promise.allSettled(promiseArray);
+    fs.writeFileSync('ids.json', JSON.stringify(allExistingIds));
     console.log(`closing crawler at ${new Date().toString()}`);
     await browser.close();
   } catch (err) {
