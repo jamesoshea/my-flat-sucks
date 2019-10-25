@@ -69,6 +69,7 @@ const main = async () => {
               const message = createMessage(messageParameters);
               if (!isApartmentGood(property)) {
                 console.log('skipped', id);
+                checkedIds.push(id);
                 resolve();
                 return;
               }
