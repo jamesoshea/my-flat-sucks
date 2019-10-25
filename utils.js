@@ -4,7 +4,7 @@ const coolPostcodes = require('./postcodes.json');
 const createMessage = ({ street, lastName, salutation }) => {
   let message;
   if (street) {
-    `ich habe viel Interesse an der Wohnung, die auf ${street} angelegt ist. Wann ist die nächste mögliche Besichtigungstermin?\n\nLiebe Grüße,\n\nJames O'Shea`;
+    message = `ich habe viel Interesse an der Wohnung, die auf ${street} angelegt ist. Wann ist die nächste mögliche Besichtigungstermin?\n\nLiebe Grüße,\n\nJames O'Shea`;
   } else {
     message = `ich habe viel Interesse an dieser Wohnung. Wann ist die nächste mögliche Besichtigungstermin?\n\nLiebe Grüße,\n\nJames O'Shea`;
   }

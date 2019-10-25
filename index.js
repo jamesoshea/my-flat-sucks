@@ -85,10 +85,10 @@ const main = async () => {
               await page.waitForSelector('textarea', { visible: true });
               await page.type('textarea', message);
               await page.click('[data-qa="sendButtonBasic"]');
-              await sendNotificationEmail(id);
               await page.close();
               console.log('done', id);
               checkedIds.push(id);
+              await sendNotificationEmail(id);
               resolve();
             });
           } catch (error) {
