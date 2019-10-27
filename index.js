@@ -81,6 +81,8 @@ const main = async () => {
               await page.goto(`https://www.immobilienscout24.de/expose/${id}`, {
                 timeout: 0,
               });
+              const HTML = await page.content();
+              fs.writeFileSync(`./saved-pages/${id}.html`, HTML);
               await page.click('[data-qa="sendButton"]');
               await page.waitForSelector('textarea', { visible: true });
               await page.type('textarea', message);
