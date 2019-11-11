@@ -110,6 +110,4 @@ const main = async () => {
   }
 };
 
-// run this bad boi every 2 minutes
 main();
-setInterval(main, 1000 * 60 * 2);
