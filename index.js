@@ -1,10 +1,13 @@
 require('dotenv').config();
-const fs = require('fs');
 const puppeteer = require('puppeteer');
 
 const axios = require('./createOAuthRequest');
-const { createMessage, isApartmentGood } = require('./utils');
-const { sendNotificationEmail } = require('./emailNotifier');
+const {
+  client,
+  createMessage,
+  isApartmentGood,
+  keysAsync,
+} = require('./utils');
 
 const password = process.env.PASSWORD;
 const userId = process.env.USER_ID;
@@ -13,6 +16,10 @@ const main = async () => {
   console.log(`spinning up at ${new Date().toString()}`);
   const browser = await puppeteer.launch();
   try {
+    client.on('error', function(err) {
+      throw new Error('Error: ' + err);
+    });
+
     const page = await browser.newPage();
     page.setViewport({
       width: 1280,
@@ -29,22 +36,23 @@ const main = async () => {
 
     // go to page and fetch offers
     await page.goto(
-      'https://www.immobilienscout24.de/Suche/S-2/Wohnung-Miete/Berlin/Berlin/-/1,50-/-/EURO--900,00/-/-/-/-/-/true',
+      'https://www.immobilienscout24.de/Suche/S-2/Wohnung-Miete/Berlin/Berlin/-/1/-/EURO--900,00/-/-/-/-/-/true',
     );
     const idsFromPage = await page.$$eval('.result-list__listing', (items) =>
       items.map((item) => item.dataset.id),
     );
-    const oldIds = JSON.parse(fs.readFileSync('ids.json'));
-    const newIds = idsFromPage.filter((id) => !oldIds.includes(id));
-    const oldIdsToSkip = idsFromPage.filter((id) => oldIds.includes(id));
+    const keys = await keysAsync('*');
+    const newIds = idsFromPage.filter((id) => !keys.includes(id));
+
+    const oldIdsToSkip = idsFromPage.filter((id) => keys.includes(id));
     oldIdsToSkip.forEach((id) => {
       console.log('skipping old ad', id);
     });
 
-    const allExistingIds = Array.from(new Set([...oldIds, ...idsFromPage]));
     // save offer ids so we don't message anyone twice
-    const checkedIds = [...oldIds];
-    fs.writeFileSync('ids.json', JSON.stringify(allExistingIds));
+    newIds.forEach((id) => {
+      client.set(id, 1);
+    });
 
     const promiseArray = [];
     newIds.forEach(async (id) => {
@@ -68,7 +76,6 @@ const main = async () => {
               const message = createMessage(messageParameters);
               if (!isApartmentGood(property)) {
                 console.log('skipped', id);
-                checkedIds.push(id);
                 resolve();
                 return;
               }
@@ -82,15 +89,13 @@ const main = async () => {
                 timeout: 0,
               });
               const HTML = await page.content();
-              fs.writeFileSync(`./saved-pages/${id}.html`, HTML);
+              client.set(id, HTML);
               await page.click('[data-qa="sendButton"]');
               await page.waitForSelector('textarea', { visible: true });
               await page.type('textarea', message);
-              await page.click('[data-qa="sendButtonBasic"]');
+              // await page.click('[data-qa="sendButtonBasic"]');
               await page.close();
               console.log('done', id);
-              checkedIds.push(id);
-              await sendNotificationEmail(id);
               resolve();
             });
           } catch (error) {
@@ -101,7 +106,6 @@ const main = async () => {
       );
     });
     await Promise.allSettled(promiseArray);
-    fs.writeFileSync('ids.json', JSON.stringify(checkedIds));
     console.log(`closing crawler at ${new Date().toString()}`);
     await browser.close();
   } catch (err) {
@@ -111,3 +115,5 @@ const main = async () => {
 };
 
 main();
+
+setInterval(main, 1000 * 60 * 5);

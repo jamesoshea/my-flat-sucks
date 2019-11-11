@@ -1,5 +1,18 @@
+require('dotenv').config();
+const redis = require('redis');
+const { promisify } = require('util');
+
 const { minimumFloorSpace } = require('./config');
 const coolPostcodes = require('./postcodes.json');
+
+const connectionString = process.env.REDIS_CONNECTION_STRING;
+const redisPassword = process.env.REDIS_PASSWORD;
+
+const client = redis.createClient({
+  url: connectionString,
+  no_ready_check: true,
+  auth_pass: redisPassword,
+});
 
 const createMessage = ({ street, lastName, salutation }) => {
   let message;
@@ -33,7 +46,11 @@ const isApartmentGood = (property) => {
   return Boolean(isCloseEnough(property) && isBigEnough && hasBalcony);
 };
 
+const keysAsync = promisify(client.keys).bind(client);
+
 module.exports = {
+  client,
   createMessage,
   isApartmentGood,
+  keysAsync,
 };
