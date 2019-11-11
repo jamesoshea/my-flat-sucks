@@ -1,5 +1,5 @@
 module.exports = {
-  minimumFloorSpace: 50,
+  minimumFloorSpace: 40,
   searchCenter: {
     latitude: 52.521641,
     longitude: 13.40342,
